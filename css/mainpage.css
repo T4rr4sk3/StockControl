@@ -1,0 +1,31 @@
+.blank-box {
+			width: 90%;
+			margin: 3% auto;
+			padding: 2%;
+		}
+
+		.menu {
+			margin: 0 1%;
+		}
+
+		.texto {
+			color: white;
+		}
+
+		.texto:hover {
+			color:gray;
+		}
+
+		.text-light:hover {
+			cursor: default;
+		}
+
+		.pesquisa {
+			width: 500px;
+			margin: 1.5% auto;
+			border-radius: 3px;
+		}
+
+		.btn:hover {
+			background-color: lightgray;
+		}

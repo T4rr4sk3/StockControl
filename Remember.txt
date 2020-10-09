@@ -1,0 +1,46 @@
+v10/10/2019
+----------------------------------SQL--
+
+create table marca(
+	nome varchar(25) not null,
+    id int primary key auto_increment not null
+);
+
+create table tipo(
+	nome varchar(25) not null,
+    id int primary key auto_increment not null
+);
+
+create table controle(
+	qtde int unsigned not null,
+    estado varchar(20) not null default "Disponivel",
+    id_marca int not null,
+    id_tipo int not null,
+    modelo varchar(30) not null,	
+
+    foreign key (id_marca) references marca(id) on delete cascade,
+    foreign key (id_tipo) references tipo(id) on delete cascade
+);
+
+create table usuario(
+	id int auto_increment primary key not null,
+    nome varchar(50) not null,
+    username varchar(25) not null unique,
+    pass varchar(25) not null,
+    nivel int(1) default 2
+);
+
+select nome, username, pass, nivel from usuario;
+
+select  t.nome as Tipo, c.modelo as Modelo, m.nome as Marca, c.estado as Estado, c.qtde as Quantidade from controle c inner join tipo t on c.id_tipo = t.id inner join marca m on c.id_marca = m.id and c.estado = "Disponivel"
+
+insert into marca (nome) values ("Itautec"), ("Hoopson"), ("BansonTech");
+insert into tipo (nome) values ("Teclado"), ("Mouse"); 
+insert into controle (qtde , id_marca, id_tipo, modelo) values (30,1,1,"Comum USB"), (30,2,1,"Comum USB"), (30,3,2,"Comum 1.3m USB");
+insert into usuario (nome,username,pass) values ("Daniel Pelajo", "dfpelajo","dermage01#");
+
+----------------------------------SQL--
+07/11/2019
+
+https://social.msdn.microsoft.com/Forums/pt-BR/8625ed45-db4c-4364-9f27-b2b68ed85639/select-em-c-com-banco-de-dados-mysql?forum=vscsharppt
+site bom pra dps (C# com Banco de Dados, tipo Java com DB com JDBC).
