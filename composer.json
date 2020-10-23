@@ -1,5 +1,11 @@
 {
-    "require": {
-        "phpoffice/phpspreadsheet": "^1.15"
+  "require": {
+    "phpoffice/phpspreadsheet": "^1.15"
+  },
+  "autoload": {
+    "psr-4": {
+      "Src\\" :  "src/"
     }
+  }
+
 }

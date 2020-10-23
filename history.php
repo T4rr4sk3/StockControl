@@ -55,7 +55,7 @@ $con = OpenCon("estoque");
 		</nav>
 	</div>
 
-<div class="blank-box table-responsive">
+<div class="blank-box table-responsive mt-5">
         <table class="table table-hover mx-auto table-striped table-bordered" id="tabela">
             <thead class="thead-dark">
                 <tr>
