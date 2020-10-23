@@ -55,7 +55,7 @@ session_start();
 				padding:1.5%;
 				margin-left: auto;
 				margin-right: auto;
-				margin-top: 186px;
+				margin-top: 168px;
 				background-color: white;
 				border-radius: 5px;
 				box-shadow: 2px 2px black;
@@ -63,8 +63,7 @@ session_start();
 
 			.input-box{
 				width:100%;
-				padding: 5px 4px 5px 4px;
-				border-radius: 4px;
+				padding: 5px 4px 5px 4px;				
 			}
 
 			.input-label{
@@ -72,7 +71,7 @@ session_start();
 			}
 
 			.text-login{
-				font-family: Verdana, Geneva, Tahoma, sans-serif;
+				font-family: Helvetica;
 			}
 
 			.submit-btn{
@@ -85,13 +84,18 @@ session_start();
 				padding: 3%;
 			}
 
+			.title{
+				text-align: center;
+				font-family: Helvetica;
+				font-size: 26px;
+			}
 		</style>
 	</head>
 <body>
 
 	<div class="blank-box">
 		<form method="POST" action="validate.php">
-			<h2 style="text-align: center;">Stocks - Login</h2>
+			<h2 class="title">Stock Control</h2>
 			<div class="input-label">
 				<label class="text-login">Usuário</label>
 			</div>
@@ -106,14 +110,21 @@ session_start();
 	</div>
 
 	<?php
-		if(isset($_SESSION['erro'])) {
-			$exibir = $_SESSION['erro'];
-			$msg = $_SESSION['msg'];
+		
+		if(isset($_SESSION['msg']))
+			$erro = $_SESSION['msg'];
+		else
+			$erro = false;	
 
-				if($_SESSION['erro']) {
-					echo '<script>alert("'.$_SESSION['msg'].'")</script>';
-					$_SESSION['erro'] = false;
-				}
+
+		//$msg = "";
+
+		if($erro) {			
+
+			$msg = $_SESSION['msg'];						
+			echo '<script>alert("'.$msg.'");</script>';
+			$_SESSION['erro'] = false;
+			
 		} ?>
 
 </body>

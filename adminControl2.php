@@ -15,7 +15,6 @@ session_start();
         }
 
 $con = OpenCon("estoque");
-
 ?>
 
 <!DOCTYPE html>
@@ -37,10 +36,11 @@ $con = OpenCon("estoque");
 
 <div class="bg-dark">
 		<nav class="ml-3 nav">
-			<h2 class="text-light">Stocks teste</h2>
+			<h2 class="text-light">Stocks</h2>
 			<a class="ml-3 nav-link texto" href="adminControl.php">Início</a>
             <a class="ml-3 nav-link texto" href="history.php">Histórico</a>
             <a class="ml-3 nav-link texto" href="creator.php">Criar</a>
+            <a class="ml-3 nav-link texto" href="export-control-excel.php" target="_blank">Teste</a>
             <a class="ml-3 nav-link texto" href="exit.php">Sair</a>
 		</nav>
 	</div>
@@ -53,13 +53,13 @@ $con = OpenCon("estoque");
           <label class="input-group-text" for="search">Pesquisar</label>
         </div>
 
-        <select class="custom-select" name="escolha" style="height:40px" for="search">
+        <select class="custom-select" name="escolha" for="search">
           <option selected>Tipo</option>
             <option>Marca</option>
           <option>Modelo</option>
         </select>
           <div class="input-group-append">
-            <input id="search" name="pesquisa" type="search" placeholder="Pesquisar..." class="form-control" style="border-radius: 0;"/>
+            <input id="search" name="pesquisa" type="search" placeholder="Digite aqui..." class="form-control" style="border-radius: 0;"/>
           </div>   
 			  <button type="submit" class="btn btn-outline-white" style="border-radius: 0 .25rem .25rem 0"><img src="baseline_search_black_24dp.png" /></button>
 
@@ -67,8 +67,31 @@ $con = OpenCon("estoque");
     </form>
   </div>
 
-    <div class="blank-box table-responsive">
-        <table class="table table-hover mx-auto table-striped table-bordered">
+  <div class="d-flex justify-content-center pt-2" onchange="Filtrar(this)">
+        
+    <label class="mr-3">Exibir:</label>
+
+        <label class="mr-2">
+            <input type="checkbox" value="novo" checked>
+                <span class=" mr-1">Novo</span>
+        </label>
+        <label class="mr-2">
+            <input type="checkbox" value="usado" checked>
+                <span class="mr-1">Usado</span>
+        </label>
+        <!--<label class="mr-2">
+            <input type="checkbox" value="em uso">
+                <span class=" mr-1">Em Uso</span>
+        </label>-->        
+     </div>          
+
+     <!--Tabela e botao de exportar em cima-->
+    <div class="blank-box table-responsive">        
+        <form action="export-excel.php" target="_blank" method="POST">    
+            <button class="btn btn-sm btn-dark mb-1 float-right" type="submit">Exportar Excel</button>
+        </form>
+
+        <table class="table table-hover mx-auto table-striped table-bordered" id="table">
             <thead class="thead-dark">
                 <tr>
                     <th scope="col">Tipo</th>
@@ -77,8 +100,8 @@ $con = OpenCon("estoque");
                     <th scope="col">Controle</th>
                 </tr>
             </thead>
-                <tbody>
-            <?php
+                <tbody id="tabela">
+            <?php                             
                 // $n = 0; //variavel contadora de linha, util pra array gerada de itens.(depois eu vou melhorar este processo.)
                 $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo where estado in ("Novo") group by t.nome';
                 $p = $con->query($q);
@@ -118,25 +141,25 @@ $con = OpenCon("estoque");
             ?>
                 </tr>
                 
-    <?php   if($nivel == 5){
-                    $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo where estado in ("Em Uso") group by t.nome';
-                    $p = $con->query($q);
-                    if($p->num_rows > 0) {
-                    while($r = $p->fetch_row()) {?>
+    <?php
+    /*
+                $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo where estado in ("Em Uso") group by t.nome';
+                $p = $con->query($q);
+                if($p->num_rows > 0) {
+                while($r = $p->fetch_row()) {?>
                 <tr>    
                     <td><?php echo implode("</td><td>",$r); ?></td>
                     <td>
                         <button type="button" class="btn btn-primary sm-btn mx-2" data-toggle="modal" data-target="#dialogo1" onclick="Retirar(this,Opcoes.DESCARTAR)">
-                            Retirar
+                            Modificar
                         </button>
                     </td>
 
                 <?php
                         } 
-                    }
-                }?>
+                    }*/?>
 
-                </tr>
+                <!--</tr>-->
 
             </tbody>
         </table>
@@ -214,7 +237,7 @@ $con = OpenCon("estoque");
           <div class="modal-footer">
 
             <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="Dispose()">Fechar</button>
-            <button type="button" class="btn btn-primary" onclick="Verificar()">Efetuar</button>
+                <button type="button" class="btn btn-primary" onclick="Verificar()">Efetuar</button>
             <button type="submit" class="d-none" form="myform" id="enviar"></button>
           </div>
         </div>
@@ -226,6 +249,45 @@ $con = OpenCon("estoque");
 			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script>
 
+        function Filtrar(x) {
+            Novo = x.getElementsByTagName("input")[0];
+            Usado = x.getElementsByTagName("input")[1];
+            Em_uso = x.getElementsByTagName("input")[2];
+            tr = document.getElementById("tabela").getElementsByTagName("tr");
+
+            for (i=0; i<tr.length; i++){
+                td = tr[i].getElementsByTagName("td")[1];
+                estado = td.innerText || td.textContent;
+                
+                switch(estado){
+                    case "Novo":
+                        if(Novo.checked)
+                            tr[i].style.display = "";
+                        else
+                            tr[i].style.display = "none";
+                            
+                        break;
+
+                    case "Em Uso":
+                        if(Em_uso.checked)
+                            tr[i].style.display = "";
+                        else
+                            tr[i].style.display = "none";
+                         
+                        break;
+
+                    case "Usado":
+                        if(Usado.checked)
+                            tr[i].style.display = "";
+                        else
+                            tr[i].style.display = "none";
+                         
+                        break;
+
+                }
+            }
+        }
+
         document.getElementById('myform').addEventListener('keypress', function(e) {
             var keyCode = e.keyCode || e.which;
             if (keyCode === 13) {
@@ -233,9 +295,17 @@ $con = OpenCon("estoque");
                 Verificar();
                 return false;
                 
-              }
+            }
         });
 
+        document.getElementById('dialogo1').addEventListener('keydown',function(e){
+            var keyCode = e.keyCode || e.which;
+            if (keyCode === 27) {
+                Dispose();
+                return false;
+          
+            }
+        });
 
         var a = [{
         <?php 
@@ -281,10 +351,10 @@ $con = OpenCon("estoque");
             var repor = document.getElementById('repor');
             var descartar = document.getElementById('descartar');
 
-            if (num > 0) {
-            	if(retirar != null) {
-
-            		if (repor.checked) {
+            if (num > 0) {            	
+                if(retirar != null){
+                    
+                    if (repor.checked){
                     	if (confirm("Deseja repor " + num + " deste item?"))
                         	document.getElementById('enviar').click();
 
@@ -296,14 +366,22 @@ $con = OpenCon("estoque");
                         if (confirm("Deseja retirar " + num + " deste item?"))
                             document.getElementById('enviar').click();
 
-	            	} else if (num > qtde)
+                } else {
+                    
+                    if (repor.checked){
+                    	    if (confirm("Deseja repor " + num + " deste item?"))
+                        	    document.getElementById('enviar').click();
 
-	            		alert("A quantidade a descartar não pode ser maior que a Disponível!");
+            		    } else if (num > qtde)
 
-	            	else if(descartar.checked)
-		                	if(confirm("Deseja descartar " + num + " deste item?"))
-		                		document.getElementById('enviar').click();
+						    alert("A quantidade a descartar não pode ser maior que a Disponível!");
 
+                	    else if (descartar.checked)
+                            if (confirm("Deseja descartar " + num + " deste item?"))
+                                document.getElementById('enviar').click();
+
+                    }   
+                                                 
             } else 
                 alert("A quantidade não pode ser zero!");
             
@@ -356,35 +434,33 @@ $con = OpenCon("estoque");
                             }
                         }
                     }
-
+            //aqui muda pra retirar ou descartar no modal
             if(opcao == Opcoes.RETIRAR) {            	
-            	
-            	
+            	            	
             	rad.innerHTML = '<label class="mr-2"><input type="radio" name="opcao" value="retirar" id="retirar" checked>Retirar</label>';
-
-	            rad.innerHTML += '<label class="mr-3"><input type="radio" name="opcao" value="repor" id="repor">Repor</label>';
-
+                rad.innerHTML += '<label class="mr-3"><input type="radio" name="opcao" value="repor" id="repor">Repor</label>';
 
             } else if(opcao == Opcoes.DESCARTAR) {
 
-            	rad.innerHTML = '<label class="mr-3"><input type="radio" name="opcao" value="descartar" id="descartar" checked>Descartar</label>';
-
+            	rad.innerHTML = '<label class="mr-2"><input type="radio" name="opcao" value="descartar" id="descartar" checked>Descartar</label>';
+                rad.innerHTML += '<label class="mr-3"><input type="radio" name="opcao" value="repor" id="repor">Realocar</label>';
             }
 
+            
+
 		}
 
-<?php
+ <?php
+    
+    if(isset($_SESSION['exib_dialg'])){
+        $exibir = $_SESSION['exib_dialg'];
+        $msg = $_SESSION['dialg'];
 
-	if(isset($_SESSION['exib_dialg'])) {
-		$exibir = $_SESSION['exib_dialg'];
-		$msg = $_SESSION['dialg'];
-
-		if($exibir) {
-			print('alert("'.$msg.'");');
-			$_SESSION['exib_dialg'] = false;
-		}
-	}
-	
+        if($exibir) {				
+            echo 'alert("'.$msg.'");';
+            $_SESSION['exib_dialg'] = false;
+	    }
+    }
  ?>
     </script>
 </body>

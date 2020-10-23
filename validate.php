@@ -5,37 +5,49 @@ include_once 'DBC.php';
     $user = $_POST['username'];
     $pass = $_POST['pass'];
 
-    //echo '<script>alert("Tá setado.")</script>';
+    session_start();
 
-    $con = OpenCon("estoque");
+    
 
-    $q = "SELECT nome,nivel from usuario where username like ? and pass like ?";
+    try {
+    
+        $con = OpenCon("estoque");        
 
-    $p = $con->prepare($q);
+        $q = "SELECT nome,nivel from usuario where username like ? and pass like ?";
+
+        $p = $con->prepare($q);
         
-    $p->bind_param('ss',$user,$pass);
+        $p->bind_param('ss',$user,$pass);
 
-    $p->execute();
+        $p->execute();
 
-    $r = $p->get_result();
+        $r = $p->get_result();
 
-    if($r->num_rows > 0){
-        if($r->num_rows == 1){
+        if($r->num_rows > 0){
+            if($r->num_rows == 1){
             
-            session_start();
+                $s = $r->fetch_row();
             
-            $s = $r->fetch_row();
-            
-            $_SESSION['usuario'] = $s[0];
+                $_SESSION['usuario'] = $s[0];
 
-            $_SESSION['nivel'] = $s[1];
+                $_SESSION['nivel'] = $s[1];
             
-            redirect("adminControl.php",303);
+                redirect("adminControl.php",303);
+            }
+        } else{
+
+            $_SESSION['erro'] = true;
+            $_SESSION['msg'] = "Usuário ou senha incorretos.";
+            redirect("index.php",303);
+
         }
-    } else{
+
+    } catch (Exception $e) {
 
         $_SESSION['erro'] = true;
-        $_SESSION['msg'] = "Usuário ou senha incorretos.";
+        $msg = "Não foi possível contactar banco de dados interno. ".$e->getFile()." Linha ".$e->getLine();
+        $_SESSION['msg'] = str_replace("\\","\\\\",$msg);
         redirect("index.php",303);
-
+        //echo $_SESSION['msg'];
+    
     }

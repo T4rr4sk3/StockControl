@@ -22,15 +22,15 @@ if($esc == "Marca" or $esc == "Modelo" or $esc == "Tipo") {
     //and a escolha]
     switch ($esc) {
         case 'Marca' :
-            $q2 = 'm.nome like "%'.$pesquisa.'%"';
+            $q2 = 'UPPER(m.nome) like UPPER("%'.$pesquisa.'%")';
         break;
 
         case 'Tipo' :
-            $q2 = 't.nome like "%'.$pesquisa.'%"';
+            $q2 = 'UPPER(t.nome) like UPPER("%'.$pesquisa.'%")';
         break;
 
         case 'Modelo' :
-            $q2 = 'controle.modelo like "%'.$pesquisa.'%"';
+            $q2 = 'UPPER(controle.modelo) like UPPER("%'.$pesquisa.'%")';
         break;
     } 
 } else {
@@ -79,7 +79,7 @@ if($esc == "Marca" or $esc == "Modelo" or $esc == "Tipo") {
                 <tbody>
             <?php
                 // $n = 0; //variavel contadora de linha, util pra array gerada de itens.(depois eu vou melhorar este processo.)
-                $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo inner join marca m on m.id = id_marca where estado in ("Novo","Usado") and '.$q2.' group by t.nome';
+                $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo inner join marca m on m.id = id_marca where estado in ("Novo") and '.$q2.' group by t.nome';
                 $p = $con->query($q);
                 if($p->num_rows > 0) { 
                     // $_SESSION['tipo_r'] = $_SESSION['marca_r'] = $_SESSION['estado_r'] = $_SESSION['modelo_r'] = array();
@@ -96,26 +96,46 @@ if($esc == "Marca" or $esc == "Modelo" or $esc == "Tipo") {
             } 
             ?>
                 </tr>
-                
-    <?php   if($nivel == 5){
-                    $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo inner join marca m on m.id = id_marca where estado in ("Uso") and '.$q2.' group by t.nome';
-                    $p = $con->query($q);
-                    if($p->num_rows > 0) {
-                    while($r = $p->fetch_row()) {?>
-                <tr>    
-                    <td><?php echo implode("</td><td>",$r); ?></td>
-                    <td>
-                        <button type="button" class="btn btn-primary sm-btn mx-2" data-toggle="modal" data-target="#dialogo1" onclick="Retirar(this,Opcoes.DESCARTAR)">
-                            Retirar
-                        </button>
-                    </td>
 
                 <?php
-                        } 
-                    }
-                }?>
-
+                // $n = 0; //variavel contadora de linha, util pra array gerada de itens.(depois eu vou melhorar este processo.)
+                $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo inner join marca m on m.id = id_marca where estado in ("Usado") and '.$q2.' group by t.nome';
+                $p = $con->query($q);
+                if($p->num_rows > 0) { 
+                    // $_SESSION['tipo_r'] = $_SESSION['marca_r'] = $_SESSION['estado_r'] = $_SESSION['modelo_r'] = array();
+             while($r = $p->fetch_row()) { ?>
+                <tr>
+                    <td><?php echo implode("</td><td>",$r);?></td>
+                    <td>
+                        <button type="button" class="btn btn-primary sm-btn mx-2" data-toggle="modal" data-target="#dialogo1" onclick="Retirar(this,Opcoes.RETIRAR)">
+                            Modificar
+                        </button>                             
+                    </td>
+             <?php  
+                }
+            } 
+            ?>
                 </tr>
+
+            <?php
+                // $n = 0; //variavel contadora de linha, util pra array gerada de itens.(depois eu vou melhorar este processo.)
+                $q = 'SELECT t.nome as tipo,estado,sum(qtde) FROM controle inner join tipo t on t.id = id_tipo inner join marca m on m.id = id_marca where estado in ("Em Uso") and '.$q2.' group by t.nome';
+                $p = $con->query($q);
+                if($p->num_rows > 0) { 
+                    // $_SESSION['tipo_r'] = $_SESSION['marca_r'] = $_SESSION['estado_r'] = $_SESSION['modelo_r'] = array();
+             while($r = $p->fetch_row()) { ?>
+                <tr>
+                    <td><?php echo implode("</td><td>",$r);?></td>
+                    <td>
+                        <button type="button" class="btn btn-primary sm-btn mx-2" data-toggle="modal" data-target="#dialogo1" onclick="Retirar(this,Opcoes.RETIRAR)">
+                            Modificar
+                        </button>                             
+                    </td>
+             <?php  
+                }
+            } 
+            ?>
+                </tr>               
 
             </tbody>
         </table>

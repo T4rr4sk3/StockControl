@@ -139,43 +139,94 @@ if(isset($_POST['tabela'])) {
 			<a class="ml-3 nav-link texto" href="adminControl.php">Início</a>
 		</nav>
 	</div>
+    
+    <div class="my-5 d-flex justify-content-center">
+        <div class="flex-column text-center">
+            <h3 class="mb-4">Criar Tipo ou Marca</h3>        
 
-    <form method="POST" class="my-2" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
-        <select id="tabela" name="tabela">
-            <option value="tipo">Tipo</option>
-            <option value="marca">Marca</option>
-        </select>
+            <form method="POST" class="form-inline my-4" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+                   
+                <label class="mr-2">Criar:</label>
 
-        <input type="text" name="data">
+                <div class="input-group mr-2">
+                    <div class="input-group-prepend">
+                        <select class="form-control" id="tabela" name="tabela" onchange="changePh(this)">
+                            <option value="tipo">Tipo</option>
+                            <option value="marca">Marca</option>
+                        </select>
+                    </div>
+                </div>
 
-        <input type="submit" value="Criar">
-    </form>
+                <div class="input-group mr-2">
+                    <div class="input-group-append">
+                        <input id="tipo_marca" class="form-control" type="text" name="data" placeholder="Nome do Tipo...">
+                    </div>
+                </div>
 
-    <form method="POST" class="my-2" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
-        <label>Controle: <input name="tabela" value="controle" style="display: none;">
-            <select name="tipo"><?php $q = $con->query("select nome from tipo");
-                    while($s = $q->fetch_row()) {?>
-                <option value="<?php echo $s[0];?>"><?php echo $s[0];?></option>
-                    <?php }?>
-            </select>
+                <input class="btn btn-primary" type="submit" value="Criar">
+            </form>
+        </div>
+    </div>
 
-            <select name="marca">
-            <?php $q = $con->query("select nome from marca");
-                    while($s = $q->fetch_row()) {?>
-                <option value="<?php echo $s[0];?>"><?php echo $s[0];?></option>
-                    <?php } ?>
-            </select>
+    <div class="my-5 d-flex justify-content-center">
+        <div class="flex-column text-center">
+            <h3 class="mb-4">Criar Controle</h3>
 
-                <input type="text" name="modelo" placeholder="Modelo...">
+            <form method="POST" class="form-inline my-4" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+                
+                <label class="mr-2">Controle: 
+                    <input name="tabela" value="controle" style="display: none;">
+                </label>
+                    
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <select class="form-control" style="border-bottom-right-radius:0; border-top-right-radius:0;" name="tipo"><?php $q = $con->query("select nome from tipo");
+                                while($s = $q->fetch_row()) {?>
+                            <option value="<?php echo $s[0];?>"><?php echo $s[0];?></option>
+                                <?php }?>
+                        </select>
+                    </div>
 
-                <input type="number" name="qtde">
-            <input type="submit" value="Criar Controle">
-        </label>
-    </form>
+                    
+                        <select class="form-control" name="marca">
+                        <?php $q = $con->query("select nome from marca");
+                                while($s = $q->fetch_row()) {?>
+                            <option value="<?php echo $s[0];?>"><?php echo $s[0];?></option>
+                        <?php }
+                        $q->free_result();?>                                
+                        </select>
+                    
 
-    <form target="_SELF">
-        <input type="reset" value="Reset">
+                    
+                        <input class="form-control" type="text" name="modelo" placeholder="Modelo...">
+                    
+
+                    <div class="input-group-append">
+                        <input class="form-control" type="number" style="border-bottom-left-radius:0; border-top-left-radius:0; width:65px;" name="qtde" min=0 max=100 value=0>
+                    </div>
+                </div>
+                    
+                    <input class="ml-4 btn btn-primary" type="submit" value="Criar Controle">                    
+                
+            </form>
+        </div>
+    </div>
+
+    <form class="d-flex justify-content-center mt-5" target="_SELF">
+        <input class="btn btn-primary" type="reset" value="Reset">
     </form>
 
 </body>
+
+<script>
+    function changePh(x){
+        input = document.getElementById("tipo_marca");
+        
+        if(x.value == "tipo")
+            input.placeholder = "Nome do Tipo...";
+        else
+            input.placeholder = "Nome da Marca...";
+    }
+</script>
+
 </html>

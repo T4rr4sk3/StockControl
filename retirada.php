@@ -50,12 +50,12 @@
 
             $p = $con->query($q);
             
-            if( $p->num_rows == 1 ) { // se tem uma linha já com Uso, só pega o atual, soma com a retirada e da update
+            if( $p->num_rows == 1 ) { // se tem uma linha já com Em Uso, só pega o atual, soma com a retirada e da update
                 
                 //$q = 'UPDATE controle set qtde = '..'';
                 $r = $p->fetch_assoc();
 
-                $n_r += $r['qtde'];
+                $x = $r['qtde'] + $n_r;
 
                 $q = 'UPDATE controle set qtde = ? where id_tipo = ? and id_marca = ? and modelo = ? and estado = "Em Uso"';
 
@@ -63,7 +63,7 @@
 
                     echo "Prepare failed: (" . $con->errno . ") " . $con->error;
             
-                    if( !( $p->bind_param("iiis", $n_r, $id_tipo, $id_marca, $modelo) ) )
+                    if( !( $p->bind_param("iiis", $x, $id_tipo, $id_marca, $modelo) ) )
 
                         echo "Parameters failed: (" . $p->errno . ") " . $p->error;
             
@@ -122,26 +122,104 @@
    } elseif( $opt == "repor" ) {
         
             if( $n_r > 0 ) {
+                
+                // se for repor um cara q está em uso, é considero aumentar o estoque do item usado(Pois ta repondo o estoque com algo q estava em uso)
+                if($estado == "Em Uso"){
+                    
+                    $opt = "tirar em uso e repor usado";
+                    
+                    $qtde -= $n_r; //retirando já do que tá em uso pra dar update depois
 
-                $qtde += $n_r;
+                    $q = 'select * from controle where id_tipo = '.$id_tipo.' and id_marca = '.$id_marca.' and modelo = "'.$modelo.'" and estado = "Usado"'; 
 
-                $q = 'UPDATE controle set qtde = '.$qtde.' where id_marca = ? and id_tipo = ? and modelo = ? and estado = ?';
+                    $p = $con->query($q);
 
-                if( !( $p = $con->prepare($q) ) )
+                    if($p->num_rows == 1) {
+                        
+                        $r = $p->fetch_assoc();
 
-                    echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+                        $x = $n_r + $r['qtde']; //qtde do usado mais o numero de retirada dos 'Em uso' = total usado
+
+                        $q = 'UPDATE controle set qtde = ? where id_tipo = ? and id_marca = ? and modelo = ? and estado = "Usado"';
+
+                        if( !( $p = $con->prepare($q) ) )
+
+                            echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+            
+                            if( !( $p->bind_param("iiis", $x, $id_tipo, $id_marca, $modelo) ) )
+
+                                echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+            
+                                if( !( $p->execute() ) )
+
+                                    echo "Execute failed: (" . $p->errno . ") " . $p->error;
+                                else
+
+                                    echo "Operação efetuada com sucesso.";
+
+                    } elseif ($p->num_rows == 0) {
+
+                        $q = 'insert into controle (qtde , id_marca, id_tipo, modelo, estado) values (?,?,?,?,"Usado")';
+
+                        if( !( $p = $con->prepare($q) ) )
+
+                            echo "Prepare failed: (" . $con->errno . ") " . $con->error;
         
-                    if( !( $p->bind_param("iiss", $id_marca, $id_tipo, $modelo,$estado) ) )
+                            if( !( $p->bind_param("iiis", $n_r, $id_marca, $id_tipo, $modelo) ) )
 
-                        echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+                                echo "Parameters failed: (" . $p->errno . ") " . $p->error;
         
-                        if( !( $p->execute() ) )
+                                if(!($p->execute()))
 
-                            echo "Execute failed: (" . $p->errno . ") " . $p->error;
-                        else
+                                    echo "Execute failed: (" . $p->errno . ") " . $p->error;
+                                else
 
-                            echo "Operação efetuada com sucesso.";
+                                    echo "Operação efetuada com sucesso.";
 
+                        }
+
+                        $q = 'UPDATE controle set qtde = '.$qtde.' where id_marca = ? and id_tipo = ? and modelo = ? and estado = ?';
+
+                        if( !( $p = $con->prepare($q) ) ) 
+
+                            echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+        
+                            if( !( $p->bind_param("iiss", $id_marca, $id_tipo, $modelo,$estado) ) )
+
+                                echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+        
+                                if( !( $p->execute() ) )
+
+                                    echo "Execute failed: (" . $p->errno . ") " . $p->error;
+                                else
+
+                                    echo "Operação efetuada com sucesso.";
+
+                    
+
+                } else {
+                    
+                    $opt = "repor ".$estado;
+
+                    $qtde += $n_r;
+                    
+                    $q = 'UPDATE controle set qtde = '.$qtde.' where id_marca = ? and id_tipo = ? and modelo = ? and estado = ?';
+
+                    if( !( $p = $con->prepare($q) ) ) 
+
+                        echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+        
+                        if( !( $p->bind_param("iiss", $id_marca, $id_tipo, $modelo,$estado) ) )
+
+                            echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+        
+                            if( !( $p->execute() ) )
+
+                                echo "Execute failed: (" . $p->errno . ") " . $p->error;
+                            else
+
+                                echo "Operação efetuada com sucesso.";
+                }
             }
 
    } elseif( $opt == "descartar" ) {
@@ -172,26 +250,36 @@
     }
 
     //parte de inclusao no historico
-   if( ( isset($_POST['opcao']) ) && ($n_r > 0) && ( isset($_SESSION['usuario']) ) ) {
+    try{
+       if( ( isset($_POST['opcao']) ) && ($n_r > 0) && ( isset($_SESSION['usuario']) ) ) {                        
 
-    $q = 'INSERT into historico (usuario, operacao, qtde_op, qtde_dps, id_tipo, id_marca, modelo, estado, dataehora) values (?,?,?,?,?,?,?,?,?)';
-    $dataehora = new DateTime("now",new DateTimeZone("America/Sao_Paulo"));
-
-    if( !( $p = $con->prepare($q) ) )
-
-        echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+            $q = 'INSERT into historico (usuario, operacao, qtde_op, qtde_dps, id_tipo, id_marca, modelo, estado, dataehora) values (?,?,?,?,?,?,?,?,?)';
     
-        if( !( $p->bind_param("ssiiiisss", $_SESSION['usuario'], $opt, $n_r, $qtde, $id_tipo, $id_marca, $modelo, $estado,$dataehora->format("Y-m-d H:i:s")) ) )
+            $dataehora = new DateTime("now",new DateTimeZone("America/Sao_Paulo"));
+            $str = $dataehora->format("Y-m-d H:i:s");
+            $opt = strtoupper($opt);
+            echo $opt;
 
-            echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+            if( !( $p = $con->prepare($q) ) )
+
+                echo "Prepare failed: (" . $con->errno . ") " . $con->error;
     
-            if( !( $p->execute() ) )
+                if( !( $p->bind_param("ssiiiisss", $_SESSION['usuario'], $opt, $n_r, $qtde, $id_tipo, $id_marca, $modelo, $estado, $str) ) )
 
-                echo "Execute failed: (" . $p->errno . ") " . $p->error;
-            else
+                    echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+    
+                    if( !( $p->execute() ) )
 
-                echo "Operação efetuada com sucesso.";
+                        echo "Execute failed: (" . $p->errno . ") " . $p->error;
+                    else
 
+                        echo "Operação efetuada com sucesso.";
+
+            }
+    } catch(ErroException $e){
+
+        echo $e->getMessage;
+    
     }
 
    $_SESSION['exib_dialg'] = true;

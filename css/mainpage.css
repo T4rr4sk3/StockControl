@@ -1,11 +1,17 @@
 .blank-box {
 			width: 90%;
-			margin: 3% auto;
-			padding: 2%;
+			margin: 0 auto;
+			padding: 0 2% 0 2%;
 		}
 
 		.menu {
-			margin: 0 1%;
+			background-color: #0b6491;
+		}
+
+		.title-thead {
+			background-color: rgb(0, 24, 61) !important;
+			color: white !important;
+			outline-color: gray !important;
 		}
 
 		.texto {
@@ -28,4 +34,8 @@
 
 		.btn:hover {
 			background-color: lightgray;
+		}
+
+		.custom-select{
+			height:50px;
 		}
