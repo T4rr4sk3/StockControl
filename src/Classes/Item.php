@@ -1,4 +1,5 @@
 <?php
+
 namespace Src\Classes;
 
 include_once 'DBC.php';
@@ -11,13 +12,48 @@ class Item implements \JsonSerializable{
 	private $modelo;
 	private $estado;
 	private $qtde;
+	private $db;
 
-	function __construct(){
-		
+	function __construct($nome_db)
+	{
+		$this->db = $nome_db;
 	}
 
-	function listarTodosJson(){
-        $con = OpenCon("estoque");
+	function getItemJson($id)
+	{
+		$con = OpenCon($this->db);
+
+		$q = 'SELECT controle.id, t.nome as tipo, m.nome as marca, modelo, estado, qtde FROM controle INNER JOIN tipo t on id_tipo = t.id INNER JOIN marca m on id_marca = m.id where id = ?';
+
+		if( !( $p = $con->prepare($q) ) )
+
+            echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+
+        if( !( $p->bind_param("i",$id) ) )
+
+            echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+
+        if( !( $p->execute() ) )
+
+            echo "Execute failed: (" . $p->errno . ") " . $p->error;
+
+		$result = $p->get_result();
+
+		if($result->num_rows == 1) {
+			$r = $result->fetch_assoc();
+
+			return $this->toJson($r);
+		} 
+		else
+
+			return null;
+
+
+	}
+
+	function listarTodosJson()
+	{
+        $con = OpenCon($this->db);
 
 		$q = 'select nome from tipo';
 
@@ -38,13 +74,14 @@ class Item implements \JsonSerializable{
     
     }
 
-	function listarPorTipoJson($tipo){
+	function listarPorTipoJson($tipo)
+	{
         return $this->toJson($this->listarPorTipo($tipo));
     } 
 
 	private function listarPorTipo($tipo)
     {
-		$con = OpenCon("estoque");
+		$con = OpenCon($this->db);
 
 		$q = 'SELECT controle.id, t.nome as tipo, m.nome as marca, modelo, estado, qtde FROM controle INNER JOIN tipo t on id_tipo = t.id INNER JOIN marca m on id_marca = m.id where UPPER(t.nome) like UPPER(?) and estado in ("Novo","Usado")';
 
@@ -65,14 +102,22 @@ class Item implements \JsonSerializable{
 		$arrayItem = array();
 
 		while($r = $result->fetch_assoc()){
-            $item = new Item();
-			$item->decodeJson(json_encode($r));
+			$db = $this->db;
+            $item = new Item($db);
+			$item->decodeJson( htmlentities( json_encode( $r, JSON_UNESCAPED_UNICODE), 0, 'UTF-8'));
 			array_push($arrayItem,$item);
+			//linha do decode pega a codificação em Json com letras acentuadas codificadas para UTF-8 com htmlentities
         }
 		
 		CloseCon($con);
 
-		return $arrayItem;
+		if(count($arrayItem) > 0)
+
+			return $arrayItem;
+
+		else
+
+			return null;
 
 	}
 
