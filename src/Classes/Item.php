@@ -19,17 +19,17 @@ class Item implements \JsonSerializable{
 		$this->db = $nome_db;
 	}
 
-	function getItemJson($id)
+	function getItemJson($itemId)
 	{
 		$con = OpenCon($this->db);
 
-		$q = 'SELECT controle.id, t.nome as tipo, m.nome as marca, modelo, estado, qtde FROM controle INNER JOIN tipo t on id_tipo = t.id INNER JOIN marca m on id_marca = m.id where id = ?';
+		$q = 'SELECT controle.id, t.nome as tipo, m.nome as marca, modelo, estado, qtde FROM controle INNER JOIN tipo t on id_tipo = t.id INNER JOIN marca m on id_marca = m.id where controle.id = ?';
 
 		if( !( $p = $con->prepare($q) ) )
 
             echo "Prepare failed: (" . $con->errno . ") " . $con->error;
 
-        if( !( $p->bind_param("i",$id) ) )
+        if( !( $p->bind_param("i",$itemId) ) )
 
             echo "Parameters failed: (" . $p->errno . ") " . $p->error;
 
@@ -43,7 +43,7 @@ class Item implements \JsonSerializable{
 			$r = $result->fetch_assoc();
 
 			return $this->toJson($r);
-		} 
+		}
 		else
 
 			return null;
@@ -61,23 +61,26 @@ class Item implements \JsonSerializable{
 
 		if($p->num_rows < 1)
             return "Erro, nenhum dado retornado do banco!";
-        
+
 		CloseCon($con);
 
 		$array = array();
-
+		
 		while ($r = $p->fetch_assoc()){
-            array_push($array,$this->listarPorTipo($r['nome']));
+            //array_push($array,$this->listarPorTipo($r['nome']));
+			$array[$r['nome']] =  $this->listarPorTipo($r['nome']);
         }
 
+		array_pop($array); //tira o ultimo elemento, que no caso é o vazio(ultima linha do fetch_assoc é vazia).
+
 		return json_encode($array);
-    
+
     }
 
 	function listarPorTipoJson($tipo)
 	{
         return $this->toJson($this->listarPorTipo($tipo));
-    } 
+    }
 
 	private function listarPorTipo($tipo)
     {
@@ -98,7 +101,7 @@ class Item implements \JsonSerializable{
             echo "Execute failed: (" . $p->errno . ") " . $p->error;
 
 		$result = $p->get_result();
-		
+
 		$arrayItem = array();
 
 		while($r = $result->fetch_assoc()){
@@ -108,7 +111,7 @@ class Item implements \JsonSerializable{
 			array_push($arrayItem,$item);
 			//linha do decode pega a codificação em Json com letras acentuadas codificadas para UTF-8 com htmlentities
         }
-		
+
 		CloseCon($con);
 
 		if(count($arrayItem) > 0)

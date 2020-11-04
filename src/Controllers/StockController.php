@@ -10,13 +10,15 @@ class StockController {
 	private $db;
 	private $method;
 	private $itemId;
+	private $qtde;
 
 	private $item;
 
-	public function __construct($db, $requestMethod, $itemId) {
+	public function __construct($db, $requestMethod, $itemId, $qtde = NULL) {
 		$this->db = $db;
 		$this->method = $requestMethod;
 		$this->itemId = $itemId;
+		$this->qtde = $qtde;
 
 		$this->item = new Item($db);
 	}
@@ -32,10 +34,17 @@ class StockController {
 					$response = $this->getAllItem();
 				};
 				break;
+
+            case 'POST':
+				if (isset($this->itemId) and isset($this->qtde)) {
+                    $response = $this->removeQtde($this->itemId,$this->qtde);
+                }
 		}
 
-		if($response)
+		if($response){
+			$this->OK();
 			return $response;
+        }
 		else
 			$this->notFoundResponse();
 	}
@@ -60,6 +69,14 @@ class StockController {
 		$this->OK();
 		return $result;
 	}
+
+	private function removeQtde($id, $qtde){
+        if($this->item->alterarQtde($id,OP_SUB))
+			$result = "Sucess";
+
+		if(! $result)
+			return $this->notFoundResponse();
+    }
 
 	private function notFoundResponse()
 	{
