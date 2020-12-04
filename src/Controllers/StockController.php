@@ -11,14 +11,16 @@ class StockController {
 	private $method;
 	private $itemId;
 	private $qtde;
+	private $op;
 
 	private $item;
 
-	public function __construct($db, $requestMethod, $itemId, $qtde = NULL) {
+	public function __construct($db, $requestMethod, $itemId, $qtde = NULL, $operacao = NULL) {
 		$this->db = $db;
 		$this->method = $requestMethod;
 		$this->itemId = $itemId;
 		$this->qtde = $qtde;
+		$this->op = $operacao;
 
 		$this->item = new Item($db);
 	}
@@ -26,20 +28,23 @@ class StockController {
 	public function processRequest()
 	{ 		
 		$response = null;
+
 		switch ($this->method) {
 			case 'GET':
-				if ($this->itemId) {
-					$response = $this->getItem($this->itemId);
-				} else {
-					$response = $this->getAllItem();
-				};
+				if ($this->itemId)
+					$response = $this->item->getItemJson($this->itemId);
+				
+				else
+					$response = $this->item->listarTodosJson();
+				
 				break;
 
             case 'POST':
-				if (isset($this->itemId) and isset($this->qtde)) {
-                    $response = $this->removeQtde($this->itemId,$this->qtde);
-                }
-		}
+				if (isset($this->itemId) and isset($this->qtde) and isset($this->op)) 
+
+					$response = $this->item->alteraQtde($this->itemId, $this->qtde, $this->op);
+					
+			}
 
 		if($response){
 			$this->OK();
@@ -78,7 +83,7 @@ class StockController {
 			return $this->notFoundResponse();
     }
 
-	private function notFoundResponse()
+	public function notFoundResponse()
 	{
 		$sapi_type = php_sapi_name();
 

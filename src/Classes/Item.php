@@ -19,6 +19,76 @@ class Item implements \JsonSerializable{
 		$this->db = $nome_db;
 	}
 
+	function alteraQtde($itemId, $qtde, $op) 
+	{
+
+		try {
+			$num_retirada = (int) $qtde;
+		} catch (Exception $e) {
+			return "Failure: ".$e->message;
+		}
+
+		$con = OpenCon($this->db);
+
+		if( !($p = $con->prepare("select qtde from controle where id = ?") ) )
+		
+			echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+
+        if( !( $p->bind_param("i",$itemId) ) )
+
+            echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+
+        if( !( $p->execute() ) )
+
+			echo "Execute failed: (" . $p->errno . ") " . $p->error;
+
+		$result = $p->get_result();
+		
+		if($result->num_rows == 1)
+			$qtde = $result->fetch_row()[0];
+		
+		else
+			return '{"id":-1,"msg":"Operacao falhou. Item nao encontrado."}';
+
+		switch($op){
+			case 'remove' :
+				if($num_retirada > $qtde)
+
+					return '{"id":-1,"msg":"Operacao falhou. Numero a retirar maior que quantidade do item."}';
+
+				$qtde = $qtde - $num_retirada;
+			break;
+
+			case 'add' :
+				$qtde = $qtde + $num_retirada;
+
+			break;
+
+			/*case 'alter' :
+
+			break;*/
+
+			default : 
+				return '{"id":-1,"msg":"Operacao invalida."}';
+		}
+
+		$q = 'UPDATE controle SET qtde = ? WHERE id = ?';
+
+		if( !( $p = $con->prepare($q) ) )
+
+			echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+
+        if( !( $p->bind_param("ii",$qtde,$itemId) ) )
+
+            echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+
+        if( !( $p->execute() ) )
+
+			echo "Execute failed: (" . $p->errno . ") " . $p->error;
+			
+		return '{"id":0,"msg":"Sucess"}';
+	}
+
 	function getItemJson($itemId)
 	{
 		$con = OpenCon($this->db);
@@ -42,6 +112,9 @@ class Item implements \JsonSerializable{
 		if($result->num_rows == 1) {
 			$r = $result->fetch_assoc();
 
+			if($r['estado'] == "Em Uso")
+				return '{ "id" : -1, "msg" : "Operacao nao permitida. Estado do item apenas para visualizacao do Admin." }';
+
 			return $this->toJson($r);
 		}
 		else
@@ -53,7 +126,7 @@ class Item implements \JsonSerializable{
 
 	function listarTodosJson()
 	{
-        $con = OpenCon($this->db);
+		$con = OpenCon($this->db);
 
 		$q = 'select nome from tipo';
 
