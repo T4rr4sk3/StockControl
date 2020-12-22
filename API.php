@@ -20,8 +20,7 @@ if(empty($_SERVER['PHP_AUTH_DIGEST'])) {
     header('HTTP/1.0 401 Unauthorized');
 	header('WWW-Authenticate: Digest realm="'.$realm.'", qop="auth",nonce="'.hash($alg_hash,uniqid()).'",opaque="'.hash($alg_hash,$realm).'"');
 	die();
-}
-    //session_start();    
+}   
 
     $str_digest = $_SERVER['PHP_AUTH_DIGEST'];
 
@@ -38,9 +37,11 @@ if(empty($_SERVER['PHP_AUTH_DIGEST'])) {
 	$cnonce = substr($str_digest, $pos+8, 16); // com essa pos, pega o cnonce
 
     $uri = $_SERVER['REQUEST_URI']; // pega a URI
-    
-	$a1 = md5($username.":".$realm.":".$users[$username]);
-	$a2 = md5($_SERVER['REQUEST_METHOD'].":".$uri);
+
+    //echo $_SERVER['PHP_AUTH_DIGEST'];
+
+	$a1 = md5($username.':'.$realm.':'.$users[$username]);
+	$a2 = md5($_SERVER['REQUEST_METHOD'].':'.$uri);
 	$resp_valida = md5($a1.':'.$nonce.':'.$nc.':'.$cnonce.':'.'auth'.':'.$a2); //junta as informacoes e gera a resp a ser validada com o response
     
     $pos = strpos($_SERVER['PHP_AUTH_DIGEST'],'response=');
@@ -50,7 +51,6 @@ if(empty($_SERVER['PHP_AUTH_DIGEST'])) {
         unset($_SERVER['PHP_AUTH_DIGEST']);
         die("Credencial invalida");
     }
-            
 
     //if(!isset($_SESSION['USER_NONCE'])){
 
@@ -95,6 +95,6 @@ $requestMethod = $_SERVER['REQUEST_METHOD']; //pega o metodo do request
 if (isset($_POST['qtde']))
     $qtde = $_POST['qtde'];
 
-$controller = new StockController("estoque", $requestMethod, $itemId, $qtde, $operacao);
+$controller = new StockController("estoque", $requestMethod, $itemId, $qtde, $operacao, $username);
 echo $controller->processRequest();
 return;

@@ -12,17 +12,19 @@ class StockController {
 	private $itemId;
 	private $qtde;
 	private $op;
+	private $username;
 
 	private $item;
 
-	public function __construct($db, $requestMethod, $itemId, $qtde = NULL, $operacao = NULL) {
+	public function __construct($db, $requestMethod, $itemId, $qtde = NULL, $operacao = NULL, $username = NULL) {
 		$this->db = $db;
 		$this->method = $requestMethod;
 		$this->itemId = $itemId;
 		$this->qtde = $qtde;
 		$this->op = $operacao;
+		$this->username = $username;
 
-		$this->item = new Item($db);
+		$this->item = new Item($db, $username);
 	}
 
 	public function processRequest()
@@ -42,7 +44,7 @@ class StockController {
             case 'POST':
 				if (isset($this->itemId) and isset($this->qtde) and isset($this->op)) 
 
-					$response = $this->item->alteraQtde($this->itemId, $this->qtde, $this->op);
+					$response = $this->item->alteraQtde($this->itemId, $this->qtde, $this->op, $this->username);
 					
 			}
 

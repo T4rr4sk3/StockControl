@@ -13,13 +13,80 @@ class Item implements \JsonSerializable{
 	private $estado;
 	private $qtde;
 	private $db;
+	private $user;
 
-	function __construct($nome_db)
+	function __construct($nome_db, $username = NULL)
 	{
 		$this->db = $nome_db;
+		$this->user = $username;
 	}
 
-	function alteraQtde($itemId, $qtde, $op) 
+	function recuperarItem($itemId) {
+
+		$con = OpenCon($this->db);
+
+		if( !($p = $con->prepare("SELECT c.id, c.qtde, c.modelo, c.estado, m.nome AS marca, t.nome AS tipo FROM controle c INNER JOIN marca m ON m.id = c.id_marca INNER JOIN tipo t ON t.id = c.id_tipo WHERE c.id = ?") ) )
+		
+			echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+
+        if( !( $p->bind_param("i",$itemId) ) )
+
+            echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+
+        if( !( $p->execute() ) )
+
+			echo "Execute failed: (" . $p->errno . ") " . $p->error;
+
+		$r = $p->get_result()->fetch_assoc();
+
+		$this->decodeJson($this->toJson($r));
+
+	}
+
+	private function salvaHistorico($itemId, $qtdeOp, $tipoOp, $username){
+		
+		$this->recuperarItem($itemId);
+
+		$con = OpenCon($this->db);
+
+		//recuperar id do tipo e marca.
+
+		$q = 'SELECT id FROM marca where nome LIKE "'. $this->marca .'"';
+
+		$p = $con->query($q);
+
+		$id_marca = $p->fetch_row()[0];
+
+		$q = 'SELECT id FROM tipo where nome LIKE "'. $this->tipo .'"';
+
+		$p = $con->query($q);
+
+		$id_tipo = $p->fetch_row()[0];
+
+		$q = 'INSERT INTO historico (usuario, operacao, qtde_op, qtde_dps, id_tipo, id_marca, modelo, estado, dataehora) VALUES (?,?,?,?,?,?,?,?,?)';
+
+		$dataehora = new \DateTime("now", new \DateTimeZone("America/Sao_Paulo"));
+		$str = $dataehora->format("Y-m-d H:i:s");
+		$tipoOp = strtoupper($tipoOp);
+
+
+		if( !( $p = $con->prepare($q) ) )
+
+			echo "Prepare failed: (" . $con->errno . ") " . $con->error;
+
+        if( !( $p->bind_param("ssiiiisss", $username, '(API) '.$tipoOp, $qtdeOp, $this->qtde, $id_tipo, $id_marca, $this->modelo, $this->estado, $str) ) )
+
+            echo "Parameters failed: (" . $p->errno . ") " . $p->error;
+
+        if( !( $p->execute() ) )
+
+			echo "Execute failed: (" . $p->errno . ") " . $p->error;
+
+		CloseCon($con);
+
+	}
+
+	function alteraQtde($itemId, $qtde, $op, $user) 
 	{
 
 		try {
@@ -85,7 +152,10 @@ class Item implements \JsonSerializable{
         if( !( $p->execute() ) )
 
 			echo "Execute failed: (" . $p->errno . ") " . $p->error;
-			
+
+		//$q = 'INSERT INTO historico VALUES ()'; Parte para salvar no historico tem que ser Funcao
+		$this->salvaHistorico($itemId, $num_retirada, $op, $user);
+		
 		return '{"id":0,"msg":"Sucess"}';
 	}
 
